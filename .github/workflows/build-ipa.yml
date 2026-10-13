@@ -1,0 +1,38 @@
+name: Build IPA for 全能签
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Extract source zip
+        run: |
+          mkdir source
+          unzip -q LiveTryOnAR-source.zip -d source
+          test -f source/project.yml
+          test -f source/Scripts/build_unsigned_ipa.sh
+
+      - name: Build unsigned IPA
+        run: bash source/Scripts/build_unsigned_ipa.sh
+        env:
+          BUNDLE_IDENTIFIER: ${{ vars.BUNDLE_IDENTIFIER }}
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: LiveTryOnAR-unsigned-ipa
+          path: source/build/ipa/*.ipa
+          if-no-files-found: error
